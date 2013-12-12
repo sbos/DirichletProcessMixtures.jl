@@ -20,24 +20,6 @@ function suffstats(D::Type{MvNormal}, x::Matrix{Float64}, w::UnsafeVectorView{Fl
     MvNormalStats(s, m, s2, tw)
 end
 
-function suffstats(D::Type{MvNormal}, x::Matrix{Float64}, w::Float64)
-    d = size(x, 1)
-    n = size(x, 2)
-
-    return suffstats(MvNormal, x, ones(n) * w)    
-
-    tw = n * w
-    s = zeros(d)
-    for i=1:n
-        @devec s[:] += x[:, i] .* w
-    end
-    m = s * inv(tw)
-    z = multiply!(bsubtract(x, m, 1), sqrt(w))
-    s2 = A_mul_Bt(z, z)
-
-    MvNormalStats(s, m, s2, tw)
-end
-
 function posterior_cool(prior::NormalWishart, ss::MvNormalStats)
     if ss.tw < eps() return prior end
 
@@ -165,12 +147,11 @@ function gaussian_mixture(prior::NormalWishart, T::Int64, alpha::Float64, x::Mat
         pred = map(predictive, theta)
 
         for i=1:nt
-            il = 0.
             for k=1:T
-                il += π[k] * pdf(pred[k], x[:, i])
+                logp[i] += π[k] * pdf(pred[k], x[:, i])
             end
-            logp[i] = log(il)
         end
+        log!(logp)
 
         return logp
     end
