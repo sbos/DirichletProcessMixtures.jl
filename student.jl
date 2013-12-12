@@ -9,10 +9,6 @@ immutable MultivariateStudent
     sigma::AbstractPDMat
 end
 
-#function MultivariateStudent(nu::Float64, mu::Vector{Float64},sigma::AbstractPDMat)
-#    return new(nu, mu, sigma)
-#end
-
 function MultivariateStudent(nu::Float64, mu::Vector{Float64}, sigma::Matrix{Float64})
     return MultivariateStudent(nu, mu, PDMat(sigma))
 end 

@@ -72,12 +72,10 @@ T(mix::TSBPMM) = size(mix.z, 2)
 
 function infer(mix::TSBPMM, niter::Int64, ltol::Float64; iter_callback::Function = (oksa...) -> begin end)
     prev_lb = variational_lower_bound(mix)
-#    println("TSBPMM iteration 0, lbound=$prev_lb")
     for iter=1:niter
         variational_update(mix)
         
         lb = variational_lower_bound(mix)
-#        println("TSBPMM iteration $iter, lbound=$lb")
 
         iter_callback(mix, iter, lb)
 
