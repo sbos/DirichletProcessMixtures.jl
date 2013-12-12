@@ -15,14 +15,18 @@ immutable TSBPMM
     object_loglikelihood::Function
     cluster_entropy::Function
 
-    function TSBPMM(N::Int64, T::Int64, α::Float64, 
+    function TSBPMM(N::Int64, T::Int64, α::Float64,
+            logpi::Vector{Float64}, z::Matrix{Float64},
             cluster_update::Function,
             cluster_loglikelihood::Function,
             object_loglikelihood::Function,
             cluster_entropy::Function)
+        @assert length(logpi) == T "logpi must have size T"
+        @assert size(z) == (N, T) "z has incostistent size"
+
         return new(α, [Beta(1., α) for i=1:T-1], 
-                ones(T) / T,
-                ones(N, T) / T,
+                logpi,
+                z,
                 cluster_update,
                 cluster_loglikelihood,
                 object_loglikelihood,
@@ -30,26 +34,63 @@ immutable TSBPMM
     end
 end
 
+function TSBPMM(N::Int64, T::Int64, α::Float64,
+            cluster_update::Function,
+            cluster_loglikelihood::Function,
+            object_loglikelihood::Function,
+            cluster_entropy::Function; random_init=false)
+    logpi = zeros(T)
+    z = zeros(N, T)
+
+    if random_init
+        rand!(logpi)
+        ps = sum(logpi)
+        @devec logpi ./= ps
+        log!(logpi)
+
+        rand!(z)
+        for i=1:N
+            zs = sum(z[i, :])
+            z[i, :] ./= zs
+        end
+    else
+        logpi[:] = -log(T)
+        z[:, :] = 1. / T
+    end
+
+    return TSBPMM(N, T, α,
+            logpi,
+            z,
+            cluster_update,
+            cluster_loglikelihood,
+            object_loglikelihood,
+            cluster_entropy)
+end
+
 N(mix::TSBPMM) = size(mix.z, 1)
 T(mix::TSBPMM) = size(mix.z, 2)
 
-function infer(mix::TSBPMM, niter::Int64, ltol::Float64)
+function infer(mix::TSBPMM, niter::Int64, ltol::Float64; iter_callback::Function = (oksa...) -> begin end)
     prev_lb = variational_lower_bound(mix)
-    println("TSBPMM iteration 0, lbound=$prev_lb")
+#    println("TSBPMM iteration 0, lbound=$prev_lb")
     for iter=1:niter
         variational_update(mix)
         
         lb = variational_lower_bound(mix)
-        println("TSBPMM iteration $iter, lbound=$lb")
+#        println("TSBPMM iteration $iter, lbound=$lb")
 
-        @assert lb > prev_lb "Not monotone"
+        iter_callback(mix, iter, lb)
+
+        @assert lb >= prev_lb "Not monotone"
         if abs(lb - prev_lb) < ltol
             println("Converged")
-            return lb
+            return iter
         end
 
         prev_lb = lb
     end
+
+    return niter
 end
 
 function variational_update(mix::TSBPMM)
@@ -86,15 +127,16 @@ function variational_lower_bound(mix::TSBPMM)
     return loglikelihood(mix) + entropy(mix)
 end
 
-logmean(beta::Beta) = digamma(beta.alpha) - digamma(beta.alpha + beta.beta)
-
-loginvmean(beta::Beta) = digamma(beta.beta) - digamma(beta.alpha + beta.beta)
+meanlog(beta::Beta) = digamma(beta.alpha) - digamma(beta.alpha + beta.beta)
+meanlogmirror(beta::Beta) = digamma(beta.beta) - digamma(beta.alpha + beta.beta)
+meanmirror(beta::Beta) = beta.beta / (beta.alpha + beta.beta)
+logmeanmirror(beta::Beta) = log(beta.beta) - log(beta.alpha + beta.beta)
 
 function logpi!(π::Vector{Float64}, mix::TSBPMM)
     r = 0.
     for k=1:T(mix)-1
-        π[k] = logmean(mix.qv[k]) + r
-        r += loginvmean(mix.qv[k])
+        π[k] = meanlog(mix.qv[k]) + r
+        r += meanlogmirror(mix.qv[k])
     end
     π[T(mix)] = r
 end
@@ -112,7 +154,7 @@ function loglikelihood(mix::TSBPMM)
         zs = sum(zk)
         if k <= T(mix) - 1
             qv = mix.qv[k]        
-            ll += zs * logmean(qv) + (mix.α+ts-1) * loginvmean(qv) - lbeta(1., mix.α)
+            ll += zs * meanlog(qv) + (mix.α+ts-1) * meanlogmirror(qv) - lbeta(1., mix.α)
             assert(!isnan(ll))
         end
 
@@ -144,5 +186,16 @@ function map_assignments(mix::TSBPMM)
     return z
 end
 
-export TSBPMM, infer, variational_lower_bound, map_assignments
+function pi!(π::Vector{Float64}, mix::TSBPMM)
+    r = 0.
+    for k=1:T(mix)-1
+        qv = mix.qv[k]
+        π[k] = exp(log(mean(qv)) + r)
+        r += logmeanmirror(qv)
+    end
+    π[T(mix)] = exp(r)
+    assert(abs(sum(π) - 1.) < 1e-7)
+end
+
+export TSBPMM, infer, variational_lower_bound, map_assignments, pi!, T
 

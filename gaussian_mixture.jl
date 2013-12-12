@@ -2,7 +2,7 @@ using Distributions
 using NumericExtensions
 using Devectorize
 
-import Distributions.MvNormalStats, Distributions.lpgamma
+import Distributions.MvNormalStats, Distributions.lpgamma, Distributions.suffstats, Distributions.mean
 
 function suffstats(D::Type{MvNormal}, x::Matrix{Float64}, w::UnsafeVectorView{Float64})
     d = size(x, 1)
@@ -15,6 +15,24 @@ function suffstats(D::Type{MvNormal}, x::Matrix{Float64}, w::UnsafeVectorView{Fl
     end
     m = s * inv(tw)
     z = bmultiply!(bsubtract(x, m, 1), sqrt(w), 2)
+    s2 = A_mul_Bt(z, z)
+
+    MvNormalStats(s, m, s2, tw)
+end
+
+function suffstats(D::Type{MvNormal}, x::Matrix{Float64}, w::Float64)
+    d = size(x, 1)
+    n = size(x, 2)
+
+    return suffstats(MvNormal, x, ones(n) * w)    
+
+    tw = n * w
+    s = zeros(d)
+    for i=1:n
+        @devec s[:] += x[:, i] .* w
+    end
+    m = s * inv(tw)
+    z = multiply!(bsubtract(x, m, 1), sqrt(w))
     s2 = A_mul_Bt(z, z)
 
     MvNormalStats(s, m, s2, tw)
@@ -52,6 +70,15 @@ function expected_logdet(nw::NormalWishart)
     return logd
 end
 
+function expected_T(nw::NormalWishart)
+    return nw.Tchol[:U]' * nw.Tchol[:U] * nw.nu 
+end
+
+function mean(nw::NormalWishart)
+    T = expected_T(nw)
+    return MvNormalCanon(T * nw.mu, T)
+end
+
 function lognorm(nw::NormalWishart)
     return (nw.dim / 2) * (log(2 * pi) - log(nw.kappa)) + (nw.nu / 2) * logdet(nw.Tchol) + (nw.dim * nw.nu / 2) * log(2.) + lpgamma(nw.dim, nw.nu / 2)
 end
@@ -73,8 +100,13 @@ function entropy(nw::NormalWishart)
     return en
 end
 
+function marginal_loglikelihood(prior::NormalWishart, posterior::NormalWishart, n::Float64)
+    d = prior.dim
+    return lognorm(posterior) - lognorm(prior) - (n*d/2) * log(2 * pi)
+end
+
 function gaussian_mixture(prior::NormalWishart, T::Int64, alpha::Float64, x::Matrix{Float64})
-    N = size(x, 2)
+    dim, N = size(x)
     theta = Array(NormalWishart, T)
 
     for k=1:T
@@ -121,9 +153,44 @@ function gaussian_mixture(prior::NormalWishart, T::Int64, alpha::Float64, x::Mat
     mm = TSBPMM(N, T, alpha, cluster_update,
             cluster_loglikelihood,
             object_loglikelihood, 
-            cluster_entropy)
+            cluster_entropy; random_init=true)
 
-    return mm
+    function predictive_loglikelihood(xt::Matrix{Float64})
+        nt = size(xt, 2)
+        logp = zeros(nt)
+
+        π = zeros(T)
+        pi!(π, mm)
+
+        for i=1:nt
+            il = 0.
+            for k=1:T
+                post = posterior_cool(theta[k], suffstats(MvNormal, xt[:, [i]]))
+                il += π[k] * exp(marginal_loglikelihood(theta[k], post, 1.))
+            end
+            logp[i] = log(il)
+        end
+
+        return logp
+    end
+
+    function posterior_draw(M::Int64)
+        xn = zeros(dim, M)
+        zn = zeros(Int64, M)
+
+        mean_theta = map(mean, theta)
+        π = zeros(T)
+        pi!(π, mm)
+        mixture = Categorical(π)
+        for i=1:M
+            zn[i] = rand(mixture)
+            xn[:, i] = rand(mean_theta[zn[i]])
+        end
+
+        return zn, xn
+    end
+
+    return mm, theta, predictive_loglikelihood, posterior_draw
 end
 
 export gaussian_mixture
