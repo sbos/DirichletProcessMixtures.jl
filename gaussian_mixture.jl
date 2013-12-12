@@ -167,8 +167,6 @@ function gaussian_mixture(prior::NormalWishart, T::Int64, alpha::Float64, x::Mat
         for i=1:nt
             il = 0.
             for k=1:T
-#                post = posterior_cool(theta[k], suffstats(MvNormal, xt[:, [i]]))
-#                il += π[k] * exp(marginal_loglikelihood(theta[k], post, 1.))
                 il += π[k] * pdf(pred[k], x[:, i])
             end
             logp[i] = log(il)
@@ -177,23 +175,7 @@ function gaussian_mixture(prior::NormalWishart, T::Int64, alpha::Float64, x::Mat
         return logp
     end
 
-    function posterior_draw(M::Int64)
-        xn = zeros(dim, M)
-        zn = zeros(Int64, M)
-
-        mean_theta = map(mean, theta)
-        π = zeros(T)
-        pi!(π, mm)
-        mixture = Categorical(π)
-        for i=1:M
-            zn[i] = rand(mixture)
-            xn[:, i] = rand(mean_theta[zn[i]])
-        end
-
-        return zn, xn
-    end
-
-    return mm, theta, predictive_loglikelihood, posterior_draw
+    return mm, theta, predictive_loglikelihood
 end
 
 export gaussian_mixture
