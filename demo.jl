@@ -1,6 +1,6 @@
-require("src/DPMM.jl")
+require("src/DirichletProcessMixtures.jl")
 
-using DPMM
+using DirichletProcessMixtures
 using Distributions
     
 function ball(N::Int64, x::Float64, y::Float64)

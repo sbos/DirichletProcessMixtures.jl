@@ -1,4 +1,4 @@
-module DPMM
+module DirichletProcessMixtures
 
 using NumericExtensions
 using Devectorize
