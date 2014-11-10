@@ -9,7 +9,7 @@ Most likelely you need this package especially for this purpose, this is how to 
 
 First off, you define your prior over parameters of mixture component (i.e. mean and precision matrix) using `NormalWishart` distribution:
 ```julia
-using DPMM
+using DirichletProcessMixtures
 using Distributions
 
 prior = NormalWishart(zeros(2), 1e-7, eye(2) / 4, 4.0001)
