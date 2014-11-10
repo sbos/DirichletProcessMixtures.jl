@@ -1,10 +1,11 @@
 using Distributions
 using NumericExtensions
 using Devectorize
+using ArrayViews
 
 import Distributions.MvNormalStats, Distributions.lpgamma, Distributions.suffstats, Distributions.mean
 
-function suffstats(D::Type{MvNormal}, x::Matrix{Float64}, w::UnsafeVectorView{Float64})
+function suffstats(D::Type{MvNormal}, x::Matrix{Float64}, w::DenseArray{Float64})
     d = size(x, 1)
     n = size(x, 2)
 
@@ -95,7 +96,7 @@ function gaussian_mixture(prior::NormalWishart, T::Int64, alpha::Float64, x::Mat
         theta[k] = prior
     end
 
-    function cluster_update(k::Int64, z::Union(UnsafeVectorView{Float64}, Array{Float64}))
+    function cluster_update(k::Int64, z::DenseArray{Float64})
         nw = posterior_cool(prior, suffstats(MvNormal, x, z))
         theta[k] = nw
     end
@@ -104,7 +105,7 @@ function gaussian_mixture(prior::NormalWishart, T::Int64, alpha::Float64, x::Mat
         return entropy(theta[k])
     end
 
-    function cluster_loglikelihood(k::Int64, z::Union(UnsafeVectorView{Float64}, Array{Float64}))
+    function cluster_loglikelihood(k::Int64, z::DenseArray{Float64})
         post = posterior_cool(prior, suffstats(MvNormal, x, z))
         n = sum(z)
 

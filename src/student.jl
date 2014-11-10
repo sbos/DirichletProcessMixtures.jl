@@ -1,7 +1,8 @@
 using NumericExtensions
 using Distributions
+using PDMats
 
-import NumericExtensions.dim
+import PDMats.dim
 
 immutable MultivariateStudent
     nu::Float64

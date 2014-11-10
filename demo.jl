@@ -1,3 +1,5 @@
+require("src/DPMM.jl")
+
 using DPMM
 using Distributions
     
