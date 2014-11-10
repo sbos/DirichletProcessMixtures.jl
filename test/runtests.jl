@@ -1,4 +1,4 @@
-using DPMG
+using DPMM
 using Base.Test
 
 # write your own tests here
