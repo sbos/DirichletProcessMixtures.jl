@@ -1,7 +1,3 @@
-using NumericExtensions
-using Distributions
-using PDMats
-
 import PDMats.dim
 
 immutable MultivariateStudent

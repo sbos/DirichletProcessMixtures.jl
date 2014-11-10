@@ -1,8 +1,3 @@
-using Distributions
-using NumericExtensions
-using Devectorize
-using ArrayViews
-
 import Distributions.entropy
 
 immutable TSBPMM

@@ -1,8 +1,3 @@
-using Distributions
-using NumericExtensions
-using Devectorize
-using ArrayViews
-
 import Distributions.MvNormalStats, Distributions.lpgamma, Distributions.suffstats, Distributions.mean
 
 function suffstats(D::Type{MvNormal}, x::Matrix{Float64}, w::DenseArray{Float64})
