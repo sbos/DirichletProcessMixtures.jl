@@ -1,4 +1,4 @@
-DPMM.jl
+DirichletProcessMixtures.jl
 =======
 
 This package implements Dirichlet Process Mixture Models in Julia using variational inference for truncated stick-breaking representation of Drichlet Process.
