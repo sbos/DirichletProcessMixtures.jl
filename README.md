@@ -24,7 +24,7 @@ gm, theta, predictive_likelihood = gaussian_mixture(prior, T, alpha, x)
 
 `gm` is an internal representation of mixture model. `theta` is array of size `T` whose elements refer to parameters of posterior `NormalWishart`'s. Finally, `predictive_likelihood` is a function which takes a matrix containing test data and returns per-point test loglikelihood. Now we can perform inference in our model
 
-```julua
+```julia
 function iter_callback(mix::TSBPMM, iter::Int64, lower_bound::Float64)
     pl = sum(predictive_likelihood(xtest)) / M
     println("iteration $iter test likelihood=$pl, lower_bound=$lower_bound")
