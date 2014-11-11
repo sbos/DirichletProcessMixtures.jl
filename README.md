@@ -1,11 +1,14 @@
+[![Build Status](https://travis-ci.org/sbos/DirichletProcessMixtures.jl.png)](https://travis-ci.org/sbos/DirichletProcessMixtures.jl)
+[![DirichletProcessMixtures](http://pkg.julialang.org/badges/DirichletProcessMixtures_release.svg)](http://pkg.julialang.org/?pkg=DirichletProcessMixtures&ver=release)
+
 DirichletProcessMixtures.jl
 =======
 
-This package implements Dirichlet Process Mixture Models in Julia using variational inference for truncated stick-breaking representation of Drichlet Process.
+This package implements Dirichlet Process Mixture Models in Julia using variational inference for truncated stick-breaking representation of Dirichlet Process.
 
 ## (almost) infinite mixture of Gaussians
 
-Most likelely you need this package especially for this purpose, this is how to do Guassian clustering. You may check [demo code](demo.jl) which contains almost all functionality you may need.
+Most likely you need this package especially for this purpose, this is how to do Gaussian clustering. You may check [demo code](demo.jl) which contains almost all functionality you may need.
 
 First off, you define your prior over parameters of mixture component (i.e. mean and precision matrix) using `NormalWishart` distribution:
 ```julia
@@ -42,4 +45,4 @@ Another useful quantities you may need from mixture model:
 
 ## General interface
 
-It is also possible to implement custom mixture models with conjugate priors for mixture components, but this remains to be documented yet. For a reference implementation of custom mixture model use [mixture of Gassians](src/gaussian_mixture.jl).
+It is also possible to implement custom mixture models with conjugate priors for mixture components, but this remains to be documented yet. For a reference implementation of custom mixture model use [mixture of Gaussians](src/gaussian_mixture.jl).
