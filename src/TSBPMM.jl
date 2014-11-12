@@ -75,7 +75,7 @@ function infer(mix::TSBPMM, niter::Int64, ltol::Float64; iter_callback::Function
 
         iter_callback(mix, iter, lb)
 
-        @assert lb >= prev_lb "Not monotone"
+        @assert lb + eps() >= prev_lb "Not monotone"
         if abs(lb - prev_lb) < ltol
             println("Converged")
             return iter
