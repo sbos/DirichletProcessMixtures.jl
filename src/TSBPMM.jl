@@ -88,6 +88,19 @@ function infer(mix::TSBPMM, niter::Int64, ltol::Float64; iter_callback::Function
 end
 
 function variational_update(mix::TSBPMM)
+    ts = 0.
+    for k=truncation_level(mix):-1:1
+        zk = view(mix.z, :, k)
+        mix.cluster_update(k, zk)
+        zs = sum(zk)
+        if k < truncation_level(mix)
+            mix.qv[k] = Beta(1. + zs, mix.α + ts)
+        end
+        ts += zs
+    end
+
+    logpi!(mix.π, mix)  
+
     z = zeros(truncation_level(mix))
     for i=1:N(mix)
         for k=1:truncation_level(mix)
@@ -102,19 +115,6 @@ function variational_update(mix::TSBPMM)
 
         mix.z[i, :] = z
     end
-
-    ts = 0.
-    for k=truncation_level(mix):-1:1
-        zk = view(mix.z, :, k)
-        mix.cluster_update(k, zk)
-        zs = sum(zk)
-        if k < truncation_level(mix)
-            mix.qv[k] = Beta(1. + zs, mix.α + ts)
-        end
-        ts += zs
-    end
-
-    logpi!(mix.π, mix)    
 end
 
 function variational_lower_bound(mix::TSBPMM)
