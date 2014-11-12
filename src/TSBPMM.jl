@@ -76,7 +76,6 @@ function infer(mix::TSBPMM, niter::Int64, ltol::Float64; iter_callback::Function
         iter_callback(mix, iter, lb)
 
         if abs(lb - prev_lb) < ltol
-            println("Converged")
             return iter
         end
 
