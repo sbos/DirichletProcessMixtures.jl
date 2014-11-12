@@ -16,11 +16,11 @@ function lognorm(t::MultivariateStudent)
     return lgamma(t.nu / 2) + (dim(t)/2) * (log(t.nu) + log(pi)) + 0.5 * logdet(t.sigma) - lgamma((t.nu + dim(t)) / 2)
 end
 
-function logpdf(t::MultivariateStudent, x::Vector{Float64})
+function logpdf{Tf <: FloatingPoint}(t::MultivariateStudent, x::Vector{Tf})
     return - (t.nu + dim(t)) / 2 * log(1 + invquad(t.sigma, x - t.mu) / t.nu) - lognorm(t)
 end
 
-function pdf(t::MultivariateStudent, x::Vector{Float64})
+function pdf{Tf <: FloatingPoint}(t::MultivariateStudent, x::Vector{Tf})
     return exp(logpdf(t, x))
 end
 
