@@ -48,12 +48,12 @@ function expected_logdet(nw::NormalWishart)
     return logd
 end
 
-function expected_T(nw::NormalWishart)
+function expected_truncation_level(nw::NormalWishart)
     return nw.Tchol[:U]' * nw.Tchol[:U] * nw.nu 
 end
 
 function mean(nw::NormalWishart)
-    T = expected_T(nw)
+    T = expected_truncation_level(nw)
     return MvNormalCanon(T * nw.mu, T)
 end
 
