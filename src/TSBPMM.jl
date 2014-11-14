@@ -66,10 +66,12 @@ end
 N(mix::TSBPMM) = size(mix.z, 1)
 truncation_level(mix::TSBPMM) = size(mix.z, 2)
 
-function infer(mix::TSBPMM, niter::Int64, ltol::Float64; iter_callback::Function = (oksa...) -> begin end)
+function infer(mix::TSBPMM, niter::Int64, ltol::Float64; 
+        iter_callback::Function = (oksa...) -> begin end,
+        disable_dp = false)
     prev_lb = variational_lower_bound(mix)
     for iter=1:niter
-        variational_update(mix)
+        variational_update(mix; disable_dp=false)
         
         lb = variational_lower_bound(mix)
 
@@ -85,20 +87,24 @@ function infer(mix::TSBPMM, niter::Int64, ltol::Float64; iter_callback::Function
     return niter
 end
 
-function variational_update(mix::TSBPMM)
-    ts = 0.
-    for k=truncation_level(mix):-1:1
-        zk = view(mix.z, :, k)
-        mix.cluster_update(k, zk)
-        zs = sum(zk)
-        if k < truncation_level(mix)
-            mix.qv[k] = Beta(1. + zs, mix.α + ts)
+function variational_update(mix::TSBPMM; disable_dp=false)
+    if !disable_dp
+        ts = 0.
+        for k=truncation_level(mix):-1:1
+            zk = view(mix.z, :, k)
+            mix.cluster_update(k, zk)
+            zs = sum(zk)
+            if k < truncation_level(mix)
+                mix.qv[k] = Beta(1. + zs, mix.α + ts)
+            end
+            ts += zs
         end
-        ts += zs
+
+        logpi!(mix.π, mix)
+    else
+        mix.π[:] = 0.
     end
-
-    logpi!(mix.π, mix)  
-
+    
     z = zeros(truncation_level(mix))
     for i=1:N(mix)
         for k=1:truncation_level(mix)
