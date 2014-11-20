@@ -1,6 +1,6 @@
 import Distributions.MvNormalStats, Distributions.lpgamma, Distributions.suffstats, Distributions.mean
 
-function suffstats{Tf <: FloatingPoint}(D::Type{MvNormal}, x::Matrix{Tf}, w::DenseArray{Float64})
+function suffstats{Tf <: FloatingPoint}(D::Type{MvNormal}, x::DenseArray{Tf, 2}, w::DenseArray{Float64})
     d = size(x, 1)
     n = size(x, 2)
 
@@ -83,7 +83,7 @@ function marginal_loglikelihood(prior::NormalWishart, posterior::NormalWishart, 
     return lognorm(posterior) - lognorm(prior) - (n*d/2) * log(2 * pi)
 end
 
-function gaussian_mixture{Tf <: FloatingPoint}(prior::NormalWishart, T::Int64, alpha::Float64, x::Matrix{Tf})
+function gaussian_mixture{Tf <: FloatingPoint}(prior::NormalWishart, T::Int64, alpha::Float64, x::DenseArray{Tf, 2})
     dim, N = size(x)
     theta = Array(NormalWishart, T)
 
@@ -133,7 +133,7 @@ function gaussian_mixture{Tf <: FloatingPoint}(prior::NormalWishart, T::Int64, a
             object_loglikelihood, 
             cluster_entropy; random_init=true)
 
-    function predictive_loglikelihood{Tf <: FloatingPoint}(xt::Matrix{Tf})
+    function predictive_loglikelihood{Tf <: FloatingPoint}(xt::DenseArray{Tf, 2})
         nt = size(xt, 2)
         logp = zeros(nt)
 
