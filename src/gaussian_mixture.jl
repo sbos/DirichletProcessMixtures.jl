@@ -1,6 +1,7 @@
 import Distributions.MvNormalStats, Distributions.lpgamma, Distributions.suffstats, Distributions.mean
 
-function suffstats{Tf <: FloatingPoint}(D::Type{MvNormal}, x::DenseArray{Tf, 2}, w::DenseArray{Float64})
+function suffstats{Tf <: FloatingPoint}(D::Type{MvNormal}, x::DenseArray{Tf, 2}, 
+        w::DenseArray{Float64}, z::DenseArray{Tf, 2})
     d = size(x, 1)
     n = size(x, 2)
 
@@ -10,7 +11,7 @@ function suffstats{Tf <: FloatingPoint}(D::Type{MvNormal}, x::DenseArray{Tf, 2},
         @devec s[:] += x[:, i] .* w[i]
     end
     m = s * inv(tw)
-    z = copy(x)
+    z[:] = x
     for i in 1:n
         z_i = view(z, :, i)
         @devec z_i[:] = (z_i .- m) .* sqrt(w[i])
@@ -91,12 +92,14 @@ function gaussian_mixture{Tf <: FloatingPoint}(prior::NormalWishart, T::Int64, a
     dim, N = size(x)
     theta = Array(NormalWishart, T)
 
+    buffer = similar(x)
+
     for k=1:T
         theta[k] = prior
     end
 
     function cluster_update(k::Int64, z::DenseArray{Float64})
-        nw = posterior_cool(prior, suffstats(MvNormal, x, z))
+        nw = posterior_cool(prior, suffstats(MvNormal, x, z, buffer))
         theta[k] = nw
     end
 
@@ -105,7 +108,7 @@ function gaussian_mixture{Tf <: FloatingPoint}(prior::NormalWishart, T::Int64, a
     end
 
     function cluster_loglikelihood(k::Int64, z::DenseArray{Float64})
-        post = posterior_cool(prior, suffstats(MvNormal, x, z))
+        post = posterior_cool(prior, suffstats(MvNormal, x, z, buffer))
         n = sum(z)
 
         ll = -lognorm(prior)

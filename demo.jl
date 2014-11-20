@@ -31,11 +31,14 @@ gm, theta, predictive_likelihood = gaussian_mixture(prior, T, 1e-1, x)
 lb_log = zeros(maxiter)
 tl_log = zeros(maxiter)
 
+tic()
 function iter_callback(mix::TSBPMM, iter::Int64, lower_bound::Float64)
     pl = sum(predictive_likelihood(xtest)) / M
     lb_log[iter] = lower_bound
     tl_log[iter] = pl
+    toc()
     println("iteration $iter test likelihood=$pl, lower_bound=$lower_bound")
+    tic()
 end
 
 niter = infer(gm, maxiter, 1e-5; iter_callback=iter_callback)
