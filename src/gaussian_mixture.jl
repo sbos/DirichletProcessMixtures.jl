@@ -11,10 +11,10 @@ function suffstats{Tf <: FloatingPoint}(D::Type{MvNormal}, x::DenseArray{Tf, 2},
         @devec s[:] += x[:, i] .* w[i]
     end
     m = s * inv(tw)
-    z[:] = x
     for i in 1:n
         z_i = view(z, :, i)
-        @devec z_i[:] = (z_i .- m) .* sqrt(w[i])
+        x_i = view(x, :, i)
+        @devec z_i[:] = (x_i .- m) .* sqrt(w[i])
     end
     s2 = A_mul_Bt(z, z)
 
