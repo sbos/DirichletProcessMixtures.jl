@@ -125,10 +125,10 @@ function variational_lower_bound(mix::TSBPMM)
     return loglikelihood(mix) + entropy(mix)
 end
 
-meanlog(beta::Beta) = digamma(beta.alpha) - digamma(beta.alpha + beta.beta)
-meanlogmirror(beta::Beta) = digamma(beta.beta) - digamma(beta.alpha + beta.beta)
-meanmirror(beta::Beta) = beta.beta / (beta.alpha + beta.beta)
-logmeanmirror(beta::Beta) = log(beta.beta) - log(beta.alpha + beta.beta)
+meanlog(beta::Beta) = digamma(beta.α) - digamma(beta.α + beta.β)
+meanlogmirror(beta::Beta) = digamma(beta.β) - digamma(beta.α + beta.β)
+meanmirror(beta::Beta) = beta.β/ (beta.α + beta.β)
+logmeanmirror(beta::Beta) = log(beta.β) - log(beta.α + beta.β)
 
 function logpi!(π::Vector{Float64}, mix::TSBPMM)
     r = 0.
