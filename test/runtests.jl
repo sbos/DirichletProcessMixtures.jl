@@ -1,4 +1,4 @@
-using DPMM
+using DirichletProcessMixtures
 using Base.Test
 
 # write your own tests here
