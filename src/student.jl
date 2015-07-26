@@ -1,4 +1,5 @@
 import PDMats.dim
+import ConjugatePriors.NormalWishart
 
 immutable MultivariateStudent
     nu::Float64
