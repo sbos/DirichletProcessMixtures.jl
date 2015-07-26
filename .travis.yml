@@ -13,5 +13,10 @@ before_install:
   - sudo apt-get update -qq -y
   - sudo apt-get install libpcre3-dev julia -y
   - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
+# TODO: When ConjugatePriors is published, remove bellow clone from github
+#       and add the dependency in REQUIRE file.
 script:
-  - julia -e 'Pkg.init(); Pkg.clone(pwd()); Pkg.test("DirichletProcessMixtures")'
+  - julia -e 'Pkg.init()'
+  - julia -e 'Pkg.clone(pwd())'
+  - julia -e 'Pkg.clone("git://github.com/JuliaStats/ConjugatePriors.jl.git")'
+  - julia -e 'Pkg.test("DirichletProcessMixtures")'
