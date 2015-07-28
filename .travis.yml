@@ -18,5 +18,6 @@ before_install:
 script:
   - julia -e 'Pkg.init()'
   - julia -e 'Pkg.clone(pwd())'
+  - julia -e 'Pkg.clone("git://github.com/lindahua/NumericExtensions.jl.git")'
   - julia -e 'Pkg.clone("git://github.com/JuliaStats/ConjugatePriors.jl.git")'
   - julia -e 'Pkg.test("DirichletProcessMixtures")'
