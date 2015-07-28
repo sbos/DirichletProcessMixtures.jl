@@ -2,7 +2,10 @@ require("src/DirichletProcessMixtures.jl")
 
 using DirichletProcessMixtures
 using Distributions
-    
+using ConjugatePriors
+
+import ConjugatePriors.NormalWishart
+
 function ball(N::Int64, x::Float64, y::Float64)
     return randn(2, N) .+ [x, y]
 end
