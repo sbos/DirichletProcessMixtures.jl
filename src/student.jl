@@ -1,5 +1,4 @@
 import PDMats.dim
-
 immutable MultivariateStudent
     nu::Float64
     mu::Vector{Float64}
@@ -8,7 +7,7 @@ end
 
 function MultivariateStudent(nu::Float64, mu::Vector{Float64}, sigma::Matrix{Float64})
     return MultivariateStudent(nu, mu, PDMat(sigma))
-end 
+end
 
 dim(t::MultivariateStudent) = dim(t.sigma)
 
@@ -24,7 +23,8 @@ function pdf(t::MultivariateStudent, x::Vector{Float64})
     return exp(logpdf(t, x))
 end
 
-function predictive(nw::NormalWishart)
+
+function predictive(nw::ConjugatePriors.NormalWishart)
     nu = nw.nu - nw.dim + 1
     return MultivariateStudent(nu, nw.mu, inv(nw.Tchol) * (nw.kappa + 1)/(nw.kappa * nu))
 end

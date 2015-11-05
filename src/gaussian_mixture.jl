@@ -1,5 +1,5 @@
 import Distributions.MvNormalStats, Distributions.lpgamma, Distributions.suffstats, Distributions.mean
-
+import ConjugatePriors.NormalWishart
 function suffstats(D::Type{MvNormal}, x::Matrix{Float64}, w::DenseArray{Float64})
     d = size(x, 1)
     n = size(x, 2)
@@ -10,7 +10,7 @@ function suffstats(D::Type{MvNormal}, x::Matrix{Float64}, w::DenseArray{Float64}
         @devec s[:] += x[:, i] .* w[i]
     end
     m = s * inv(tw)
-    z = bmultiply!(bsubtract(x, m, 1), sqrt(w), 2)
+    z = (x.-m).* sqrt(w)' # subtract dim 1, multiply dim 2
     s2 = A_mul_Bt(z, z)
 
     MvNormalStats(s, m, s2, tw)
@@ -49,7 +49,7 @@ function expected_logdet(nw::NormalWishart)
 end
 
 function expected_T(nw::NormalWishart)
-    return nw.Tchol[:U]' * nw.Tchol[:U] * nw.nu 
+    return nw.Tchol[:U]' * nw.Tchol[:U] * nw.nu
 end
 
 function mean(nw::NormalWishart)
@@ -70,7 +70,7 @@ function entropy(nw::NormalWishart)
     en -= nw.dim * (log(nw.kappa) - log(2*pi))
     en += nw.dim
     en /= 2
-    
+
     en -= 0.5 * (nw.nu - nw.dim - 1) * logd
     en += nw.nu * nw.dim / 2
     en += 0.5 * nw.nu * logdet(nw.Tchol) + 0.5 * nw.nu * nw.dim * log(2.) + lpgamma(nw.dim, nw.nu/2)
@@ -130,7 +130,7 @@ function gaussian_mixture(prior::NormalWishart, T::Int64, alpha::Float64, x::Mat
 
     mm = TSBPMM(N, T, alpha, cluster_update,
             cluster_loglikelihood,
-            object_loglikelihood, 
+            object_loglikelihood,
             cluster_entropy; random_init=true)
 
     function predictive_loglikelihood(xt::Matrix{Float64})
@@ -147,7 +147,7 @@ function gaussian_mixture(prior::NormalWishart, T::Int64, alpha::Float64, x::Mat
                 logp[i] += π[k] * pdf(pred[k], x[:, i])
             end
         end
-        log!(logp)
+        logp = log(logp)
 
         return logp
     end

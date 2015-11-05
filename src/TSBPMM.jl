@@ -20,7 +20,7 @@ immutable TSBPMM
         @assert length(logpi) == T "logpi must have size T"
         @assert size(z) == (N, T) "z has incostistent size"
 
-        return new(α, [Beta(1., α) for i=1:T-1], 
+        return new(α, [Beta(1., α) for i=1:T-1],
                 logpi,
                 z,
                 cluster_update,
@@ -42,7 +42,7 @@ function TSBPMM(N::Int64, T::Int64, α::Float64,
         rand!(logpi)
         ps = sum(logpi)
         @devec logpi ./= ps
-        log!(logpi)
+        logpi = log(logpi)
 
         rand!(z)
         for i=1:N
@@ -70,7 +70,7 @@ function infer(mix::TSBPMM, niter::Int64, ltol::Float64; iter_callback::Function
     prev_lb = variational_lower_bound(mix)
     for iter=1:niter
         variational_update(mix)
-        
+
         lb = variational_lower_bound(mix)
 
         iter_callback(mix, iter, lb)
@@ -95,7 +95,7 @@ function variational_update(mix::TSBPMM)
         end
 
         @devec z[:] -= maximum(z)
-        exp!(z)
+        z = exp(z)
         @devec z[:] ./= sum(z)
 
         assert(abs(sum(z) - 1.) < 1e-7)
@@ -114,17 +114,17 @@ function variational_update(mix::TSBPMM)
         ts += zs
     end
 
-    logpi!(mix.π, mix)    
+    logpi!(mix.π, mix)
 end
 
 function variational_lower_bound(mix::TSBPMM)
     return loglikelihood(mix) + entropy(mix)
 end
 
-meanlog(beta::Beta) = digamma(beta.alpha) - digamma(beta.alpha + beta.beta)
-meanlogmirror(beta::Beta) = digamma(beta.beta) - digamma(beta.alpha + beta.beta)
-meanmirror(beta::Beta) = beta.beta / (beta.alpha + beta.beta)
-logmeanmirror(beta::Beta) = log(beta.beta) - log(beta.alpha + beta.beta)
+meanlog(beta::Beta) = digamma(beta.α) - digamma(beta.α + getfield(beta,2))
+meanlogmirror(beta::Beta) = digamma(getfield(beta,2)) - digamma(beta.α + getfield(beta,2))
+meanmirror(beta::Beta) = getfield(beta,2) / (beta.α + getfield(beta,2))
+logmeanmirror(beta::Beta) = log(getfield(beta,2)) - log(beta.α + getfield(beta,2))
 
 function logpi!(π::Vector{Float64}, mix::TSBPMM)
     r = 0.
@@ -134,7 +134,7 @@ function logpi!(π::Vector{Float64}, mix::TSBPMM)
     end
     π[T(mix)] = r
 end
-
+using Debug
 function loglikelihood(mix::TSBPMM)
     ll = 0.
 
@@ -147,7 +147,7 @@ function loglikelihood(mix::TSBPMM)
 
         zs = sum(zk)
         if k <= T(mix) - 1
-            qv = mix.qv[k]        
+            qv = mix.qv[k]
             ll += zs * meanlog(qv) + (mix.α+ts-1) * meanlogmirror(qv) - lbeta(1., mix.α)
             assert(!isnan(ll))
         end
