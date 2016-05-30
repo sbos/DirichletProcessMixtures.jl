@@ -134,7 +134,7 @@ function logpi!(π::Vector{Float64}, mix::TSBPMM)
     end
     π[T(mix)] = r
 end
-using Debug
+
 function loglikelihood(mix::TSBPMM)
     ll = 0.
 
@@ -192,4 +192,3 @@ function pi!(π::Vector{Float64}, mix::TSBPMM)
 end
 
 export TSBPMM, infer, variational_lower_bound, map_assignments, pi!, T
-
