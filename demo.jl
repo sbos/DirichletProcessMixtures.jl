@@ -1,8 +1,7 @@
-require("src/DirichletProcessMixtures.jl")
-
 using DirichletProcessMixtures
 using Distributions
-    
+using ConjugatePriors: NormalWishart
+
 function ball(N::Int64, x::Float64, y::Float64)
     return randn(2, N) .+ [x, y]
 end
@@ -40,15 +39,17 @@ end
 
 niter = infer(gm, maxiter, 1e-5; iter_callback=iter_callback)
 
+Pkg.add("PyCall")
+
 using PyCall
 @pyimport pylab
 
 #convergence plot
 #pylab.plot([1:niter], lb_log[1:niter]; color=[1., 0., 0.])
-pylab.plot([1:niter], tl_log[1:niter]; color=[0., 0., 1.])
+pylab.plot(1:niter, tl_log[collect(1:niter)]; color=[0., 0., 1.])
 
 pylab.show()
-    
+
 z = map_assignments(gm)
 for k=1:T
 xk = x[:, z .== k]
